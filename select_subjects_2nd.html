@@ -114,40 +114,88 @@
     <button id="selectBtn" onclick="saveSelection()" disabled>선택 완료</button>
   </div>
 
-  <script>
-    // 선택 버튼 활성화 조건: A, B, C 반의 과목이 모두 선택되어야 함
-    function enableButton() {
-      const A = document.getElementById("A-subjects").value;
-      const B = document.getElementById("B-subjects").value;
-      const C = document.getElementById("C-subjects").value;
-      document.getElementById("selectBtn").disabled = !(A && B && C); // A, B, C가 모두 선택되었을 때만 버튼 활성화
+ <script>
+  // 선택 버튼 활성화 조건: A, B, C 반의 과목이 모두 선택되어야 함
+  function enableButton() {
+    const A = document.getElementById("A-subjects").value;
+    const B = document.getElementById("B-subjects").value;
+    const C = document.getElementById("C-subjects").value;
+    document.getElementById("selectBtn").disabled = !(A && B && C); // A, B, C가 모두 선택되었을 때만 버튼 활성화
+  }
+
+  // 과목이 변경될 때마다 버튼 활성화 체크
+  document.getElementById("A-subjects").addEventListener("change", enableButton);
+  document.getElementById("B-subjects").addEventListener("change", enableButton);
+  document.getElementById("C-subjects").addEventListener("change", enableButton);
+
+  // 선택 완료 버튼 클릭 시 선택된 과목 저장
+  function saveSelection() {
+    const A = document.getElementById("A-subjects").value;
+    const B = document.getElementById("B-subjects").value;
+    const C = document.getElementById("C-subjects").value;
+
+    const selectedClass = localStorage.getItem('selectedClass');
+    if (!selectedClass) {
+      alert("먼저 반을 선택해주세요!");
+      window.location.href = "select_class.html"; // 반 선택 페이지로 리디렉션
+      return;
     }
 
-    // 과목이 변경될 때마다 버튼 활성화 체크
-    document.getElementById("A-subjects").addEventListener("change", enableButton);
-    document.getElementById("B-subjects").addEventListener("change", enableButton);
-    document.getElementById("C-subjects").addEventListener("change", enableButton);
+    // --- 여기부터 localStorage 저장 방식 수정 ---
+    // schedule.html의 timetable 2학년 데이터를 기반으로 A, B, C의 위치를 매핑합니다.
+    // 이 매핑은 schedule.html에 정의된 2학년 시간표의 A, B, C 자리와 일치해야 합니다.
+    // 만약 schedule.html의 2학년 시간표에서 A, B, C의 위치가 다르다면 이 부분을 수정해야 합니다.
 
-    // 선택 완료 버튼 클릭 시 선택된 과목 저장
-    function saveSelection() {
-      const A = document.getElementById("A-subjects").value;
-      const B = document.getElementById("B-subjects").value;
-      const C = document.getElementById("C-subjects").value;
+    const subjectsToSave = {};
 
-      // 선택한 과목을 localStorage에 저장
-      const selectedClass = localStorage.getItem('selectedClass');
-      const selectedSubjects = {
-        A: [A],
-        B: [B],
-        C: [C]
-      };
+    // 2학년 1반 시간표 (예시: schedule.html의 2-1 시간표 구조 참조)
+    // "월요일": ["자율", "영3", "A", "C", "수2", "수1", "문1"],
+    // "화요일": ["수2", "영4", "수1", "일본", "일본", "B", "문2"],
+    // "수요일": ["영2", "A", "미술", "수2", "C", "체육"],
+    // "목요일": ["C", "B", "체육", "문3", "A", "영1"],
+    // "금요일": ["B", "미술", "수1", "인공", "문4", "창체"]
 
-      // localStorage에 선택된 과목 저장
-      localStorage.setItem("selectedSubjects", JSON.stringify(selectedSubjects));
+    // schedule.html의 각 2학년 반 시간표에서 A, B, C가 들어갈 인덱스를 정확히 찾아야 합니다.
+    // 현재 `schedule.html`의 2학년 시간표를 기준으로 매핑한 예시입니다.
+    // 만약 2학년 다른 반의 A,B,C 위치가 다르다면, 해당 반에 대한 개별 처리가 필요합니다.
+    // 여기서는 일단 모든 2학년 반이 A, B, C 과목을 같은 요일/교시 패턴으로 가진다고 가정합니다.
 
-      alert('선택 완료!');
-      window.location.href = "schedule.html"; // 시간표 페이지로 이동
-    }
-  </script>
+    // 월요일: A(2교시 인덱스), C(3교시 인덱스)
+    // 화요일: B(5교시 인덱스)
+    // 수요일: A(1교시 인덱스), C(4교시 인덱스)
+    // 목요일: C(0교시 인덱스), B(1교시 인덱스), A(4교시 인덱스)
+    // 금요일: B(0교시 인덱스)
+
+    subjectsToSave['월요일'] = [];
+    subjectsToSave['월요일'][2] = A; // 월요일 3교시
+    subjectsToSave['월요일'][3] = C; // 월요일 4교시
+
+    subjectsToSave['화요일'] = [];
+    subjectsToSave['화요일'][5] = B; // 화요일 6교시
+
+    subjectsToSave['수요일'] = [];
+    subjectsToSave['수요일'][1] = A; // 수요일 2교시
+    subjectsToSave['수요일'][4] = C; // 수요일 5교시
+
+    subjectsToSave['목요일'] = [];
+    subjectsToSave['목요일'][0] = C; // 목요일 1교시
+    subjectsToSave['목요일'][1] = B; // 목요일 2교시
+    subjectsToSave['목요일'][4] = A; // 목요일 5교시
+
+    subjectsToSave['금요일'] = [];
+    subjectsToSave['금요일'][0] = B; // 금요일 1교시
+
+
+    // 기존 localStorage 데이터를 가져와 현재 반의 선택 과목만 업데이트
+    let allSelectedSubjects = JSON.parse(localStorage.getItem('selectedSubjects') || '{}');
+    allSelectedSubjects[selectedClass] = subjectsToSave;
+
+    localStorage.setItem("selectedSubjects", JSON.stringify(allSelectedSubjects));
+    // --- localStorage 저장 방식 수정 끝 ---
+
+    alert('선택 완료!');
+    window.location.href = "schedule.html"; // 시간표 페이지로 이동
+  }
+</script>
 </body>
 </html>
