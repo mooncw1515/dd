@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>시간표 및 학교 정보</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* 기본 HTML/Body 스타일 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: linear-gradient(135deg, #ececec, #c3c3c3);
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+
+    /* 컨테이너 스타일 */
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      width: 700px;
+      max-width: 90%;
+      padding: 40px 30px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* 제목 및 섹션 제목 스타일 */
+    h1, h2, h3 {
+      color: #222;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 24px;
+      text-align: center;
+      color: #0056b3;
+    }
+
+    h2.section-title {
+      margin-top: 20px;
+      font-size: 24px;
+      border-bottom: 3px solid #0078d7;
+      padding-bottom: 8px;
+      color: #0078d7;
+    }
+
+    /* 테이블 스타일 (시간표) */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 16px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    thead {
+      background-color: #0078d7;
+      color: white;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f8f8f8;
+    }
+
+    /* 리스트 스타일 (수행평가, 학사일정, 급식) */
+    ul {
+      margin-top: 10px;
+      padding-left: 25px;
+      list-style-type: disc;
+    }
+    ul li {
+      margin-bottom: 8px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    /* 정보 없음 메시지 */
+    p {
+      color: #666;
+      text-align: center;
+      margin-top: 15px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="classTitle">시간표 및 학교 정보</h1>
+
+    <div id="schedule">
+      <h2 class="section-title">주간 시간표</h2>
+    </div>
+
+    <div id="tasks-schedule">
+      <h2 class="section-title">수행평가 일정</h2>
+    </div>
+
+    <div id="academic-schedule">
+      <h2 class="section-title">오늘의 학사 일정</h2>
+    </div>
+
+    <div id="meal-schedule">
+      <h2 class="section-title">오늘의 급식</h2>
+    </div>
+  </div>
+
+  <script>
+    // --- 초기 설정 및 디버깅용 학급 선택 ---
+    const selectedClass = localStorage.getItem('selectedClass');
+    document.getElementById("classTitle").textContent = `${selectedClass}반 학교 정보`;
+
+    // --- 시간표 데이터 ---
+    const timetable = {
+      "1-1": {
+        "월요일": ["자율", "역사", "과4", "수1", "사4", "체육", "영3"],
+        "화요일": ["수1", "역사", "영2", "과3", "국2", "음악", "사2"],
+        "수요일": ["사1", "국1", "영1", "수2", "실험", "진2"],
+        "목요일": ["수1", "국3", "과1", "체육", "진1", "영4"],
+        "금요일": ["사3", "음악", "과2", "역사", "국4", "창체"]
+      },
+      "2-1": {
+        "월요일": ["사회문제탐구(A1)", "화학(A1)", "물리학", "영어", "지구과학", "자율"],
+        "화요일": ["윤리와사상(A1)", "화학(A2)", "세계사", "국어", "생명과학", "자율"],
+        "수요일": ["사회문제탐구(A2)", "화학(A2)", "화학(A1)", "사회문화", "윤리와사상(A2)", "체육"],
+        "목요일": ["사회문제탐구(A1)", "윤리와사상(A2)", "영어", "국어", "과학", "체육"],
+        "금요일": ["세계사", "생명과학", "물리학", "사회문화", "영어", "자율"]
+      },
+      "3-1": {
+        "월요일": ["생활과윤리(A1)", "사회문화", "심화국어", "기하", "사회과제연구", "생명과학2"],
+        "화요일": ["심화국어", "기하", "화학2", "물리학2", "경제수학", "생활과윤리(A2)"],
+        "수요일": ["사회문화", "사회과제연구", "생활과과학", "경제수학", "사회문화(D1)", "사회과제연구"],
+        "목요일": ["심화국어", "사회문화(D2)", "생활과윤리", "생활과과학", "물리학2", "기하"],
+        "금요일": ["기하", "생활과윤리(A1)", "기하", "화학2", "생명과학2", "자율"]
+      },
+      // 더 많은 반의 시간표를 추가할 수 있습니다.
+    };
+
+    // --- 선택과목 데이터 (1학년, 2학년, 3학년 반별 선택과목) ---
+    const selectedSubjects = JSON.parse(localStorage.getItem('selectedSubjects') || '{}');
+
+    // 선택된 과목 반영 함수
+    function applySelectedSubjects(className, timetable) {
+      const subjects = selectedSubjects[className];
+      if (subjects) {
+        Object.keys(subjects).forEach((day, index) => {
+          subjects[day].forEach((subject, i) => {
+            timetable[className][day][i] = subject; // 선택한 과목 반영
+          });
+        });
+      }
+    }
+
+    // 선택된 학급의 시간표 반영
+    if (selectedClass.startsWith('2') || selectedClass.startsWith('3')) {
+      applySelectedSubjects(selectedClass, timetable);
+    }
+
+    // --- 시간표 출력 ---
+    if (timetable[selectedClass]) {
+      const days = ["월요일", "화요일", "수요일", "목요일", "금요일"];
+      let html = `<table><thead><tr><th>교시</th>`;
+      days.forEach(d => html += `<th>${d}</th>`);
+      html += `</tr></thead><tbody>`;
+
+      for (let i = 0; i < 7; i++) { // 7교시까지
+        html += `<tr><td>${i+1}교시</td>`;
+        days.forEach(day => {
+          html += `<td>${timetable[selectedClass][day]?.[i] || ""}</td>`;
+        });
+        html += `</tr>`;
+      }
+      html += `</tbody></table>`;
+      document.getElementById("schedule").innerHTML += html;
+    } else {
+      document.getElementById("schedule").innerHTML += `<p>${selectedClass}반의 시간표가 없습니다.</p>`;
+    }
+
+    // --- 수행평가 일정 출력 ---
+    const tasks = {
+      "1-1": ["국어 수행평가: 6월 10일", "수학 수행평가: 7월 15일"],
+      "2-1": ["사회문제탐구(A1) 수행평가: 6월 25일", "화학(A1) 수행평가: 7월 15일"],
+      "3-1": ["심화국어 수행평가: 6월 20일", "기하 수행평가: 7월 10일"],
+      // 다른 학년 수행평가 일정 추가
+    };
+
+    if (tasks[selectedClass] && tasks[selectedClass].length > 0) {
+      let tasksHtml = "<ul>";
+      tasks[selectedClass].forEach(task => {
+        tasksHtml += `<li>${task}</li>`;
+      });
+      tasksHtml += "</ul>";
+      document.getElementById("tasks-schedule").innerHTML += tasksHtml;
+    } else {
+      document.getElementById("tasks-schedule").innerHTML += `<p>${selectedClass}반의 수행평가 일정이 없습니다.</p>`;
+    }
+
+    // --- 학사 일정 출력 ---
+    const academic = {
+      "울산여자고등학교 학사 일정": {
+        "6월": [
+          "06.03: 대통령 선거",
+          "06.04: 대수능 모의평가/전국연합학력평가",
+          "06.05: 개교기념일",
+          "06.06: 현충일"
+        ],
+        "7월": [
+          "07.01~07.04: 지필평가",
+          "07.07~07.09: 수업량유연화주간, 꿈끼탐색주간",
+          "07.10: 전국연합학력평가 (3학년)/행복어울림과정",
+          "07.14: 학생회 선거 정책 토론",
+          "07.15: 학생회 선거",
+          "07.18: 여름방학식"
+        ],
+        "8월": [
+          "08.13: 개학일",
+          "08.15: 광복절/오민영 생일",
+          "08.29~08.30: 리더십캠프"
+        ],
+        // 더 많은 학사 일정 추가
+      }
+    };
+
+    const today = new Date();
+    const currentMonthPadded = (today.getMonth() + 1).toString().padStart(2, '0');
+    const currentDatePadded = today.getDate().toString().padStart(2, '0');
+    const todayFormattedForAcademic = `${currentMonthPadded}.${currentDatePadded}`;
+
+    let academicHtml = "<ul>";
+    let todayAcademicEventsFound = false;
+    for (const monthKey in academic["울산여자고등학교 학사 일정"]) {
+      const eventsInMonth = academic["울산여자고등학교 학사 일정"][monthKey];
+      eventsInMonth.forEach(event => {
+        const eventDateMatch = event.match(/^(\d{2}\.\d{2})/);
+        if (eventDateMatch && eventDateMatch[1] === todayFormattedForAcademic) {
+          academicHtml += `<li>${event}</li>`;
+          todayAcademicEventsFound = true;
+        }
+      });
+    }
+    academicHtml += "</ul>";
+
+    if (todayAcademicEventsFound) {
+      document.getElementById("academic-schedule").innerHTML += academicHtml;
+    } else {
+      document.getElementById("academic-schedule").innerHTML += "<p>오늘의 학사 일정이 없습니다.</p>";
+    }
+
+    // --- 급식 정보 출력 ---
+    const meals = {
+      "7월 급식": {
+        "7/7": ["열무비빔밥", "콩국(자율)", "북어미역국", "배추김치", "치아바타치즈샌드위치", "복숭아음료"],
+        "7/8": ["어묵떡새송이구이", "영양쌀밥", "추어탕(자율)", "찜닭(국)", "오이부추무침", "배추김치", "짜먹는요구르트"],
+        // 더 많은 급식 정보 추가
+      }
+    };
+
+    const currentMealDate = `${today.getMonth() + 1}/${today.getDate()}`;
+    let mealHtml = "<ul>";
+    if (meals["7월 급식"] && meals["7월 급식"][currentMealDate]) {
+      meals["7월 급식"][currentMealDate].forEach(menu => {
+        mealHtml += `<li>${menu}</li>`;
+      });
+      mealHtml += "</ul>";
+      document.getElementById("meal-schedule").innerHTML += mealHtml;
+    } else {
+      document.getElementById("meal-schedule").innerHTML += "<p>오늘의 급식 정보가 없습니다.</p>";
+    }
+  </script>
+</body>
+</html>
