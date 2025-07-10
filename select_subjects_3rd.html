@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>3학년 과목 선택</title>
+  <style>
+    /* 스타일은 기본적으로 선택창에 맞게 디자인 */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f4f4f4;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .subject-option {
+      margin-bottom: 10px;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+    button:disabled {
+      background: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>과목을 선택하세요</h1>
+
+    <!-- A반 선택 -->
+    <div id="A" class="subject-option">
+      <h2>A반 선택 과목</h2>
+      <select id="A-subjects">
+        <option value="">과목을 선택하세요</option>
+        <option value="생활과윤리(A1)">생활과 윤리(A1)</option>
+        <option value="생활과윤리(A2)">생활과 윤리(A2)</option>
+        <option value="생활과과학">생활과 과학</option>
+        <option value="사회과제연구">사회과제연구</option>
+        <option value="사회문화">사회문화</option>
+        <option value="생명과학2">생명과학2</option>
+        <option value="물리학2">물리학2</option>
+        <option value="기하">기하</option>
+        <option value="경제수학">경제수학</option>
+        <option value="심화국어">심화국어</option>
+      </select>
+    </div>
+
+    <!-- B반 선택 -->
+    <div id="B" class="subject-option">
+      <h2>B반 선택 과목</h2>
+      <select id="B-subjects">
+        <option value="">과목을 선택하세요</option>
+        <option value="심화국어">심화국어</option>
+        <option value="생활과과학">생활과 과학</option>
+        <option value="여행지리">여행지리</option>
+        <option value="지구과학2">지구과학2</option>
+        <option value="사회과제연구">사회과제연구</option>
+        <option value="사회문화">사회문화</option>
+        <option value="기하">기하</option>
+        <option value="생명과학2">생명과학2</option>
+        <option value="화학2">화학2</option>
+        <option value="생활과윤리">생활과 윤리</option>
+      </select>
+    </div>
+
+    <!-- C반 선택 -->
+    <div id="C" class="subject-option">
+      <h2>C반 선택 과목</h2>
+      <select id="C-subjects">
+        <option value="">과목을 선택하세요</option>
+        <option value="생명과학2">생명과학2</option>
+        <option value="사회문화">사회문화</option>
+        <option value="기하">기하</option>
+        <option value="물리학2">물리학2</option>
+        <option value="심화국어">심화국어</option>
+        <option value="사회과제연구">사회과제연구</option>
+        <option value="생활과윤리(C1)">생활과 윤리(C1)</option>
+        <option value="생활과윤리(C2)">생활과 윤리(C2)</option>
+        <option value="생활과과학">생활과 과학</option>
+        <option value="여행지리">여행지리</option>
+      </select>
+    </div>
+
+    <!-- D반 선택 -->
+    <div id="D" class="subject-option">
+      <h2>D반 선택 과목</h2>
+      <select id="D-subjects">
+        <option value="">과목을 선택하세요</option>
+        <option value="사회문화(D1)">사회문화(D1)</option>
+        <option value="심화영어독해1">심화영어독해1</option>
+        <option value="사회과제연구">사회과제연구</option>
+        <option value="기하">기하</option>
+        <option value="화학2">화학2</option>
+        <option value="심화국어">심화국어</option>
+        <option value="생명과학2">생명과학2</option>
+        <option value="사회문화(D2)">사회문화(D2)</option>
+        <option value="생활과윤리">생활과 윤리</option>
+        <option value="생활과과학">생활과 과학</option>
+      </select>
+    </div>
+
+    <!-- 선택 완료 버튼 -->
+    <button id="selectBtn" onclick="saveSelection()" disabled>선택 완료</button>
+  </div>
+
+  <script>
+    // 선택 버튼 활성화 조건: A, B, C, D 반의 과목이 모두 선택되어야 함
+    function enableButton() {
+      const A = document.getElementById("A-subjects").value;
+      const B = document.getElementById("B-subjects").value;
+      const C = document.getElementById("C-subjects").value;
+      const D = document.getElementById("D-subjects").value;
+      document.getElementById("selectBtn").disabled = !(A && B && C && D); // A, B, C, D가 모두 선택되었을 때만 버튼 활성화
+    }
+
+    // 과목이 변경될 때마다 버튼 활성화 체크
+    document.getElementById("A-subjects").addEventListener("change", enableButton);
+    document.getElementById("B-subjects").addEventListener("change", enableButton);
+    document.getElementById("C-subjects").addEventListener("change", enableButton);
+    document.getElementById("D-subjects").addEventListener("change", enableButton);
+
+    // 선택 완료 버튼 클릭 시 선택된 과목 저장
+    function saveSelection() {
+      const A = document.getElementById("A-subjects").value;
+      const B = document.getElementById("B-subjects").value;
+      const C = document.getElementById("C-subjects").value;
+      const D = document.getElementById("D-subjects").value;
+
+      // 선택한 과목을 localStorage에 저장
+      const selectedClass = localStorage.getItem('selectedClass');
+      const selectedSubjects = {
+        A: [A],
+        B: [B],
+        C: [C],
+        D: [D]
+      };
+
+      // localStorage에 선택된 과목 저장
+      localStorage.setItem("selectedSubjects", JSON.stringify(selectedSubjects));
+
+      alert('선택 완료!');
+      window.location.href = "schedule.html"; // 시간표 페이지로 이동
+    }
+  </script>
+</body>
+</html>
