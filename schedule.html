@@ -335,25 +335,31 @@
                 "금요일": ["영2", "언3", "B", "D", "A"]
             }
         };
-    // --- 선택과목 데이터 (1학년, 2학년, 3학년 반별 선택과목) ---
-    const selectedSubjects = JSON.parse(localStorage.getItem('selectedSubjects') || '{}');
+   // --- 선택과목 데이터 (1학년, 2학년, 3학년 반별 선택과목) ---
+const selectedSubjects = JSON.parse(localStorage.getItem('selectedSubjects') || '{}');
 
-    // 선택된 과목 반영 함수
-    function applySelectedSubjects(className, timetable) {
-      const subjects = selectedSubjects[className];
-      if (subjects) {
-        Object.keys(subjects).forEach((day, index) => {
-          subjects[day].forEach((subject, i) => {
-            timetable[className][day][i] = subject; // 선택한 과목 반영
-          });
+// 선택된 과목 반영 함수
+function applySelectedSubjects(className, timetable) {
+    const subjects = selectedSubjects[className];  // 해당 학급의 선택과목 불러오기
+    if (subjects) {
+        // subjects[day]는 그날의 선택된 과목들
+        Object.keys(subjects).forEach((day) => {
+            // day에 해당하는 과목을 timetable에 반영
+            subjects[day].forEach((subject, index) => {
+                // 선택한 과목을 해당 요일, 교시 시간에 반영
+                if (!timetable[className][day]) {
+                    timetable[className][day] = [];
+                }
+                timetable[className][day][index] = subject;
+            });
         });
-      }
     }
+}
 
-    // 선택된 학급의 시간표 반영
-    if (selectedClass.startsWith('2') || selectedClass.startsWith('3')) {
-      applySelectedSubjects(selectedClass, timetable);
-    }
+// 선택된 학급의 시간표 반영
+if (selectedClass.startsWith('2') || selectedClass.startsWith('3')) {
+    applySelectedSubjects(selectedClass, timetable);
+}
 
     // --- 시간표 출력 ---
     if (timetable[selectedClass]) {
