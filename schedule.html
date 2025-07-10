@@ -386,36 +386,88 @@
             }
         };
 
-    // --- 3. 오늘의 학사 일정 출력 ---
-    const academicScheduleContainer = document.getElementById("academic-schedule");
-    const today = new Date();
-    const currentMonthPadded = (today.getMonth() + 1).toString().padStart(2, '0');
-    const currentDatePadded = today.getDate().toString().padStart(2, '0');
-    const todayFormattedForAcademic = `${currentMonthPadded}.${currentDatePadded}`;
+     // --- 학사 일정 달력 ---
+        let currentCalendarDate = new Date(); // 현재 달력에 표시할 날짜 (년, 월)
+        currentCalendarDate.setDate(1); // 항상 1일로 설정하여 월 변경 시 문제 방지
 
-    const academicTitle = "울산여자고등학교 학사 일정";
-    let todayAcademicEventsFound = false;
-    let academicHtml = "<ul>";
+        function renderCalendar() {
+            academicScheduleContainer.innerHTML = ''; // 기존 달력 삭제
 
-    if (academic[academicTitle]) { // 학사 일정 데이터가 있는지 확인
-      for (const monthKey in academic[academicTitle]) {
-        const eventsInMonth = academic[academicTitle][monthKey];
-        eventsInMonth.forEach(event => {
-          const eventDateMatch = event.match(/^(\d{2}\.\d{2})/);
-          if (eventDateMatch && eventDateMatch[1] === todayFormattedForAcademic) {
-            academicHtml += `<li>${event}</li>`;
-            todayAcademicEventsFound = true;
-          }
-        });
-      }
-    }
-    academicHtml += "</ul>";
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth(); // 0부터 시작 (0:1월, 1:2월...)
 
-    if (todayAcademicEventsFound) {
-      academicScheduleContainer.innerHTML += academicHtml;
-    } else {
-      academicScheduleContainer.innerHTML += "<p>오늘의 학사 일정이 없습니다.</p>";
-    }
+            const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+            const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
+
+            let html = `
+                <h2 class="section-title">학사 일정</h2>
+                <div class="calendar-nav">
+                    <button class="prev-month" onclick="changeMonth(-1)">&lt;</button>
+                    <span class="current-month-year">${year}년 ${monthNames[month]}</span>
+                    <button class="next-month" onclick="changeMonth(1)">&gt;</button>
+                </div>
+                <table class="calendar-table">
+                    <thead>
+                        <tr>`;
+            daysOfWeek.forEach(day => {
+                html += `<th>${day}</th>`;
+            });
+            html += `       </tr>
+                    </thead>
+                    <tbody>`;
+
+            // 해당 월의 첫 번째 날짜와 마지막 날짜 구하기
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0); // 다음 달의 0일 = 현재 달의 마지막 날
+
+            // 첫 날의 요일 (0:일, 1:월, ...)
+            const startDay = firstDayOfMonth.getDay();
+            const numDays = lastDayOfMonth.getDate(); // 해당 월의 총 일수
+
+            let date = 1;
+            for (let i = 0; i < 6; i++) { // 최대 6주까지 표시
+                html += `<tr>`;
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < startDay) {
+                        html += `<td></td>`; // 첫 주 빈 칸 채우기
+                    } else if (date > numDays) {
+                        html += `<td></td>`; // 마지막 주 빈 칸 채우기
+                    } else {
+                        const today = new Date();
+                        const isToday = (date === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+                        const todayClass = isToday ? 'today' : '';
+                        
+                        const events = academicScheduleData[year] && academicScheduleData[year][month + 1] ?
+                                         academicScheduleData[year][month + 1].filter(event => event.date === date) : [];
+
+                        html += `<td class="${todayClass}">
+                                        <div class="date-number">${date}</div>`;
+                        if (events.length > 0) {
+                            html += `<ul class="academic-events">`;
+                            events.forEach(event => {
+                                html += `<li>${event.event}</li>`;
+                            });
+                            html += `</ul>`;
+                        }
+                        html += `</td>`;
+                        date++;
+                    }
+                }
+                html += `</tr>`;
+                if (date > numDays) break; // 모든 날짜를 채웠으면 루프 종료
+            }
+            html += `   </tbody>
+                </table>`;
+            academicScheduleContainer.innerHTML = html;
+        }
+
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        renderCalendar(); // 페이지 로드 시 달력 초기 렌더링
+
 
     // --- 급식 정보 데이터 ---
     const meals = {
@@ -433,27 +485,86 @@
             }
         };
     
-    // --- 4. 오늘의 급식 출력 ---
-    const mealScheduleContainer = document.getElementById("meal-schedule");
-    const currentMealDate = `${today.getMonth() + 1}/${today.getDate()}`; // 예: "7/11" (오늘 날짜 반영)
+    // --- 주간 급식표 (월-금만 표시) ---
+        function renderWeeklyMeal() {
+            mealScheduleContainer.innerHTML = ''; // 기존 급식표 삭제
 
-    const mealTitle = "7월 급식"; // 급식 데이터의 월을 정확히 지정
-    let todayMealFound = false;
-    let mealHtml = "<ul>";
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth() + 1; // 1부터 시작하는 월
 
-    if (meals[mealTitle] && meals[mealTitle][currentMealDate]) {
-      meals[mealTitle][currentMealDate].forEach(menu => {
-        mealHtml += `<li>${menu}</li>`;
-      });
-      todayMealFound = true;
-    }
-    mealHtml += "</ul>";
+            // 현재 주의 월요일을 찾습니다. (일요일 0, 월요일 1, ..., 토요일 6)
+            let currentDayOfWeek = today.getDay(); // 0 (일) - 6 (토)
+            // 오늘이 일요일이면 지난 월요일을 찾고, 아니면 이번 주 월요일을 찾음
+            let diff = today.getDate() - currentDayOfWeek + (currentDayOfWeek === 0 ? -6 : 1); 
+            const mondayOfWeek = new Date(today.setDate(diff));
 
-    if (todayMealFound) {
-      mealScheduleContainer.innerHTML += mealHtml;
-    } else {
-      mealScheduleContainer.innerHTML += "<p>오늘의 급식 정보가 없습니다.</p>";
-    }
-  </script>
+            // 표시할 요일 (월-금)
+            const daysOfWeekDisplay = ["월", "화", "수", "목", "금"]; // 토요일, 일요일 제거
+
+            let html = `
+                <h2 class="section-title">주간 급식표</h2>
+                <table class="meal-table">
+                    <thead>
+                        <tr>`;
+            
+            // 요일 헤더 (월-금)
+            daysOfWeekDisplay.forEach(dayName => {
+                html += `<th>${dayName}</th>`;
+            });
+            html += `       </tr>
+                    </thead>
+                    <tbody>
+                        <tr>`;
+            
+            // 날짜 및 메뉴 셀 (월-금)
+            // 월요일(i=0)부터 시작하여 금요일(i=4)까지 5일만 반복
+            for (let i = 0; i < 5; i++) { 
+                let displayDate = new Date(mondayOfWeek);
+                displayDate.setDate(mondayOfWeek.getDate() + i);
+
+                const mealYear = displayDate.getFullYear();
+                const mealMonth = displayDate.getMonth() + 1;
+                const mealDay = displayDate.getDate();
+                const mealKey = mealDay;
+
+                // 이제 주말(weekend-cell) 클래스는 필요 없습니다.
+                // const dayIdx = displayDate.getDay();
+                // const isWeekend = (dayIdx === 0 || dayIdx === 6); // 0:일, 6:토
+                // const cellClass = isWeekend ? "weekend-cell" : "";
+
+                const mealsForDay = mealsData[mealYear] && mealsData[mealYear][mealMonth] ?
+                                     mealsData[mealYear][mealMonth][mealKey] : null;
+
+                const formattedDate = `${mealMonth}/${mealDay}`;
+
+                let menuContent = `<span class="no-meal">급식 정보 없음</span>`;
+                if (mealsForDay && mealsForDay.length > 0 && !(mealsForDay.length === 2 && mealsForDay[0] === "주말" && mealsForDay[1] === "급식 없음")) {
+                    menuContent = `<ul>`;
+                    mealsForDay.forEach(menu => {
+                        menuContent += `<li>${menu}</li>`;
+                    });
+                    menuContent += `</ul>`;
+                } 
+                // 이제 주말이 아니므로 "주말은 급식이 제공되지 않습니다." 메시지는 필요 없음
+                // else if (isWeekend) {
+                //     menuContent = `<span class="no-meal">주말은 급식이 제공되지 않습니다.</span>`;
+                // }
+
+                html += `<td class="meal-cell">
+                            <div class="meal-date-number">${formattedDate}</div>
+                            <div class="meal-menu-content">${menuContent}</div>
+                        </td>`;
+            }
+
+            html += `       </tr>
+                    </tbody>
+                </table>`;
+            mealScheduleContainer.innerHTML = html;
+        }
+
+        renderWeeklyMeal(); // 페이지 로드 시 주간 급식표 렌더링
+
+    </script>
 </body>
 </html>
