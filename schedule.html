@@ -412,25 +412,28 @@
             const year = currentCalendarDate.getFullYear(); // 현재 표시할 년도
             const month = currentCalendarDate.getMonth();    // 현재 표시할 월 (0:1월, 1:2월...)
 
-            const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-            const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
+           // ... (renderCalendar 함수 내부 시작)
 
-            // 달력의 기본 HTML 구조를 만듭니다.
-            let html = `
-                <h2 class="section-title">학사 일정</h2>
-                <div class="calendar-nav">
-                    <button class="prev-month" onclick="changeMonth(-1)">&lt;</button>
-                    <span class="current-month-year">${year}년 ${monthNames[month]}</span>
-                    <button class="next-month" onclick="changeMonth(1)">&gt;</button>
-                </div>
-                <table class="calendar">
-                    <thead>
-                        <tr>
-                            ${daysOfWeek.map(day => `<th class="${day === '일' ? 'sunday' : day === '토' ? 'saturday' : ''}">${day}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
+    const monthNames = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+    const daysOfWeek = ["일", "월", "화", "수", "목", "금", "토"];
+
+    // 달력의 기본 HTML 구조를 만듭니다.
+    let html = `
+        <h2 class="section-title">학사 일정</h2>
+        <div class="calendar-nav">
+            <button class="prev-month" onclick="changeMonth(-1)">&lt;</button>
+            <span class="current-month-year">${year}년 ${monthNames[month]}</span>
+            <button class="next-month" onclick="changeMonth(1)">&gt;</button>
+        </div>
+        <table class="calendar-table">  <thead>
+                <tr>
+                    ${daysOfWeek.map(day => `<th class="${day === '일' ? 'sunday' : day === '토' ? 'saturday' : ''}">${day}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+`;
+
+// ... (renderCalendar 함수 내부 나머지 코드)
 
             // 해당 월의 첫 날과 마지막 날 계산
             const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0:일, 1:월, ..., 6:토
@@ -503,37 +506,61 @@
 
         // --- 급식표 렌더링 함수 ---
         function renderWeeklyMeal() {
-            mealScheduleContainer.innerHTML = ''; // 기존 내용 삭제
-            mealScheduleContainer.innerHTML = `<h2 class="section-title">주간 급식표</h2>`;
+    mealScheduleContainer.innerHTML = ''; // 기존 내용 삭제
+    mealScheduleContainer.innerHTML = `<h2 class="section-title">주간 급식표</h2>`;
 
-            let mealHtml = `<ul>`;
-            const today = new Date();
-            // 현재 주의 월요일을 찾습니다.
-            const currentDay = today.getDay(); // 0:일, 1:월, ..., 6:토
-            const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1); // 일요일이면 이전 월요일, 아니면 현재 월요일 (1:월요일)
-            const mondayOfCurrentWeek = new Date(today.setDate(diff));
+    let mealHtml = `<table class="meal-table">
+                        <thead>
+                            <tr>
+                                <th>요일</th>
+                                <th>날짜</th>
+                                <th>메뉴</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
-            for (let i = 0; i < 5; i++) { // 월요일부터 금요일까지 5일
-                const currentDate = new Date(mondayOfCurrentWeek);
-                currentDate.setDate(mondayOfCurrentWeek.getDate() + i); // 각 요일의 날짜 설정
+    const today = new Date();
+    const currentDay = today.getDay(); // 0:일, 1:월, ..., 6:토
+    // 이번 주 월요일을 기준으로 시작 (일요일이면 지난 월요일, 그 외는 이번 주 월요일)
+    const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+    const mondayOfCurrentWeek = new Date(today.setDate(diff));
 
-                // 'YYYY-MM-DD' 형식으로 변환
-                const year = currentDate.getFullYear();
-                const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                const day = String(currentDate.getDate()).padStart(2, '0');
-                const formattedDate = `${year}-${month}-${day}`;
+    const daysOfWeekNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
-                const meals = mealsData[formattedDate];
-                const dayOfWeekName = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"][currentDate.getDay()];
+    for (let i = 0; i < 7; i++) { // 월요일부터 일요일까지 7일 (주말도 포함하여 테이블 구조 유지)
+        const currentDate = new Date(mondayOfCurrentWeek);
+        currentDate.setDate(mondayOfCurrentWeek.getDate() + i);
 
-                mealHtml += `<li>
-                                <strong>${formattedDate} (${dayOfWeekName})</strong>
-                                <span>${meals ? meals.join(", ") : "급식 정보 없음"}</span>
-                             </li>`;
-            }
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+
+        const meals = mealsData[formattedDate];
+        const dayOfWeekName = daysOfWeekNames[currentDate.getDay()]; // 현재 요일 이름
+
+        const isWeekend = (currentDate.getDay() === 0 || currentDate.getDay() === 6); // 일요일(0) 또는 토요일(6)
+        const rowClass = isWeekend ? "weekend-row" : ""; // 주말 행에 적용할 클래스
+
+        mealHtml += `<tr class="${rowClass}">
+                        <td class="${isWeekend ? 'weekend-cell' : ''}">${dayOfWeekName}</td>
+                        <td class="meal-date-cell ${isWeekend ? 'weekend-cell' : ''}">${formattedDate}</td>
+                        <td class="meal-content-cell ${isWeekend ? 'weekend-cell' : ''}">`;
+        if (meals && meals.length > 0) {
+            mealHtml += `<ul>`;
+            meals.forEach(menu => {
+                mealHtml += `<li>${menu}</li>`;
+            });
             mealHtml += `</ul>`;
-            mealScheduleContainer.innerHTML += mealHtml;
+        } else {
+            mealHtml += `<span class="no-meal">급식 정보 없음</span>`;
         }
+        mealHtml += `</td></tr>`;
+    }
+
+    mealHtml += `</tbody></table>`;
+    mealScheduleContainer.innerHTML += mealHtml;
+}
 
         // 페이지 로드 시 각 섹션의 내용을 렌더링
         document.addEventListener('DOMContentLoaded', () => {
