@@ -483,68 +483,90 @@
         function changeMonth(delta) {
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
             renderCalendar(); // 달력 다시 그리기
+        }      
+// --- 급식표 데이터 (연도 -> 월 -> 날짜별 메뉴 목록 형태로 구조 변경) ---
+const mealsData = {
+    2025: {
+        1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, // 1월~6월은 빈 객체로 표시 (데이터 없을 시)
+        7: { // 7월
+            7: ["열무비빔밥", "콩국(자율)", "북어미역국", "배추김치", "치아바타치즈샌드위치", "복숭아음료"],
+            8: ["어묵떡새송이구이", "영양쌀밥", "추어탕(자율)", "찜닭(국)", "오이부추무침", "배추김치", "짜먹는요구르트"],
+            9: ["유부초밥", "돈코츠라멘(주식)", "찐만두", "궁채양파장아찌", "배추김치", "귤"],
+            10: ["귀리밥", "백김치미역냉국", "방풍나물무침(자율)", "주꾸미떡볶음", "닭튀김샐러드", "배추김치", "바나나"],
+            11: ["통밀쌀밥", "냉짬뽕국(면사리)", "건파래자반", "탕수육(하와이안)", "배추김치", "단무지무침", "수박"],
+            12: ["주말", "급식 없음"], // 토요일
+            13: ["주말", "급식 없음"], // 일요일
+            14: ["참치비빔밥(포케)", "가쓰오맑은국", "알감자조림", "다시마채무침(자율)", "배추김치", "나쵸(치즈소스)", "망고바"],
+            15: ["오색현미밥", "들깨순두부국", "갈비맛돈육단호박조림", "야채쌈(자율)", "새우깐풍", "배추김치", "키위주스"],
+            16: ["닭야채볶음밥(치즈)", "미소된장국(미역유부)", "리코타치즈샐러드(발사믹)", "배추김치", "감자핫도그", "새송이고추장구이(자율)", "요구르트"],
+            17: ["현미밥", "육개장", "캬라멜견과볶음", "깻잎무침(자율)", "타코오믈렛", "김치볶음", "찐두부&햄", "토마토유자절임"],
+            18: ["지정밥", "묵채국", "야채겉절이", "오리불고기", "감자그라탕", "열무김치", "아이스크림"],
+            19: ["주말", "급식 없음"], // 토요일
+            20: ["주말", "급식 없음"] // 일요일
         }
-
-        // --- 급식표 데이터 ---
-        // 날짜는 'YYYY-MM-DD' 형식으로, 키가 문자열이 되도록 합니다.
-        // 현재 2025년 7월 11일 기준 급식표를 임시로 추가합니다.
-        const mealsData = {
-            "2025-07-07": ["열무비빔밥", "콩국(자율)", "복어미역국", "배추김치", "치아바타치즈샌드위치","복수아음료"],
-            "2025-07-08": ["어묵떡새송이구이", "영양쌀밥", "추어탕(자율)", "찜닭(국)", "오이부추무침", "배추김치", "짜먹는요구르트"],
-            "2025-07-09": ["유부초밥", "돈코츠라멘(주식)", "찐만두", "궁채양파장아찌", "배추김치", "귤"],
-            "2025-07-10": ["귀리밥", "백김치미역냉국", "방풍나물무침(자율)", "주꾸미떡볶음", "닭튀김샐러드", "배추김치", "바나나"],
-            "2025-07-11": ["통밀쌀밥", "냉짬뽕국(면사리)", "건파래자반", "탕수육(하와이안)", "배추김치", "단무지무침", "수박"],
-            "2025-07-14": ["참치비빔밥(포케)", "가쓰오맑은국", "알감자조림", "다시마채무침(자율)", "배추김치", "나쵸(치즈소스)", "망고바"],
-            "2025-07-15": ["오색현미밥", "들깨순두부국", "갈비맛돈육단호박조림", "야채쌈(자율)", "새우깐풍", "배추김치", "키위주스"],
-            "2025-07-16": ["닭야채볶음밥(치즈)", "미소된장국(미역유부)", "리코타치즈샐러드(발사믹)", "배추김치", "감자핫도그", "새송이고추장구이(자율)", "요구르트"],
-            "2025-07-17": ["현미밥", "육개장", "캬라멜견과볶음", "깻잎무침(자율)", "타코오믈렛", "김치볶음", "찐두부&햄", "토마토유자절임"],
-            "2025-07-18": ["지정밥", "묵채국", "야채겉절이", "오리불고기", "감자그라탕", "열무김치", "아이스크림"]
-        };
+    }
+};
 
 
-        // --- 급식표 렌더링 함수 ---
-        function renderWeeklyMeal() {
+// --- 급식표 렌더링 함수 (월-금만 표시, 가로형) ---
+function renderWeeklyMeal() {
+    if (!mealScheduleContainer) {
+        console.error("mealScheduleContainer 요소를 찾을 수 없습니다.");
+        return;
+    }
+
     mealScheduleContainer.innerHTML = ''; // 기존 내용 삭제
     mealScheduleContainer.innerHTML = `<h2 class="section-title">주간 급식표</h2>`;
 
     let mealHtml = `<table class="meal-table">
                         <thead>
-                            <tr>
-                                <th>요일</th>
-                                <th>날짜</th>
-                                <th>메뉴</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-
+                            <tr>`;
+    // 요일 헤더 (월요일부터 금요일)
+    const daysOfWeekNamesShort = ["월", "화", "수", "목", "금"];
+    daysOfWeekNamesShort.forEach(day => {
+        mealHtml += `<th>${day}</th>`;
+    });
+    mealHtml += `           </tr>
+                            <tr>`;
+    // 날짜 헤더
     const today = new Date();
     const currentDay = today.getDay(); // 0:일, 1:월, ..., 6:토
-    // 이번 주 월요일을 기준으로 시작 (일요일이면 지난 월요일, 그 외는 이번 주 월요일)
+    // 이번 주 월요일을 기준으로 계산 (일요일이면 지난 월요일, 그 외는 이번 주 월요일)
+    // 현재 날짜: 2025년 7월 11일 (금요일)
+    // 7월 11일 (금) -> getDay()는 5 (금요일)
+    // diff = 11 - 5 + 1 = 7  (7월 7일 월요일)
     const diff = today.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
-    const mondayOfCurrentWeek = new Date(today.setDate(diff));
+    const mondayOfCurrentWeek = new Date(today.getFullYear(), today.getMonth(), diff);
 
-    const daysOfWeekNames = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
 
-    for (let i = 0; i < 7; i++) { // 월요일부터 일요일까지 7일 (주말도 포함하여 테이블 구조 유지)
+    for (let i = 0; i < 5; i++) { // 월요일부터 금요일까지 5일
+        const currentDate = new Date(mondayOfCurrentWeek);
+        currentDate.setDate(mondayOfCurrentWeek.getDate() + i);
+        const month = String(currentDate.getMonth() + 1);
+        const day = String(currentDate.getDate());
+        mealHtml += `<th>${month}/${day}</th>`;
+    }
+    mealHtml += `           </tr>
+                        </thead>
+                        <tbody>
+                            <tr>`;
+
+    // 각 요일의 급식 내용 (월요일부터 금요일)
+    for (let i = 0; i < 5; i++) { // 월요일부터 금요일까지 5일
         const currentDate = new Date(mondayOfCurrentWeek);
         currentDate.setDate(mondayOfCurrentWeek.getDate() + i);
 
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-        const day = String(currentDate.getDate()).padStart(2, '0');
-        const formattedDate = `${year}-${month}-${day}`;
+        const mealYear = currentDate.getFullYear();
+        const mealMonth = currentDate.getMonth() + 1; // 1부터 시작
+        const mealDay = currentDate.getDate();
 
-        const meals = mealsData[formattedDate];
-        const dayOfWeekName = daysOfWeekNames[currentDate.getDay()]; // 현재 요일 이름
+        // mealsData 구조에 맞춰 데이터 접근
+        const meals = mealsData[mealYear]?.[mealMonth]?.[mealDay];
 
-        const isWeekend = (currentDate.getDay() === 0 || currentDate.getDay() === 6); // 일요일(0) 또는 토요일(6)
-        const rowClass = isWeekend ? "weekend-row" : ""; // 주말 행에 적용할 클래스
-
-        mealHtml += `<tr class="${rowClass}">
-                        <td class="${isWeekend ? 'weekend-cell' : ''}">${dayOfWeekName}</td>
-                        <td class="meal-date-cell ${isWeekend ? 'weekend-cell' : ''}">${formattedDate}</td>
-                        <td class="meal-content-cell ${isWeekend ? 'weekend-cell' : ''}">`;
-        if (meals && meals.length > 0) {
+        mealHtml += `<td class="meal-cell">
+                        <div class="meal-menu-content">`;
+        // "주말" 항목이 급식 데이터에 있더라도 출력하지 않도록 조건 추가
+        if (meals && meals.length > 0 && !(meals.length === 2 && meals[0] === "주말" && meals[1] === "급식 없음")) {
             mealHtml += `<ul>`;
             meals.forEach(menu => {
                 mealHtml += `<li>${menu}</li>`;
@@ -553,18 +575,21 @@
         } else {
             mealHtml += `<span class="no-meal">급식 정보 없음</span>`;
         }
-        mealHtml += `</td></tr>`;
+        mealHtml += `       </div>
+                    </td>`;
     }
 
-    mealHtml += `</tbody></table>`;
+    mealHtml += `           </tr>
+                        </tbody>
+                    </table>`;
     mealScheduleContainer.innerHTML += mealHtml;
 }
 
-        // 페이지 로드 시 각 섹션의 내용을 렌더링
-        document.addEventListener('DOMContentLoaded', () => {
-            renderCalendar(); // 학사 일정 달력 렌더링
-            renderWeeklyMeal(); // 주간 급식표 렌더링
-        });
+// 페이지 로드 시 각 섹션의 내용을 렌더링
+document.addEventListener('DOMContentLoaded', () => {
+    // renderCalendar(); // 학사 일정 달력 렌더링 (기존 코드가 이 위치에 있다면 그대로 두세요)
+    renderWeeklyMeal(); // 주간 급식표 렌더링
+});
 
         // 전역 함수로 노출 (onclick에서 사용하기 위함)
         window.changeMonth = changeMonth;
